@@ -1,0 +1,7 @@
+# For now we will be just using the ssh keys for the auth method.
+
+
+src:
+  vcs: AzureDevOps
+dest:
+  vcs: Github
