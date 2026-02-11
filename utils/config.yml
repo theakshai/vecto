@@ -1,7 +1,11 @@
 # For now we will be just using the ssh keys for the auth method.
 
-
 src:
   vcs: AzureDevOps
+  get_inventory: true # Enable discovery for demonstration
+  config:
+    org_url: https://dev.azure.com/myorg
 dest:
   vcs: Github
+repos:
+  map: repos_map.yml

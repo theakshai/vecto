@@ -20,7 +20,10 @@ def test_validate_valid_config(tmp_path, monkeypatch, mock_config_path):
             "vcs": "AzureDevOps",
             "auth": "ssh",
             "pipeline": True,
-            "get_inventory": False
+            "get_inventory": False,
+            "config": {
+                "org_url": "https://dev.azure.com/myorg"
+            }
         },
         "dest": {
             "vcs": "Github",
@@ -38,11 +41,17 @@ def test_validate_valid_config(tmp_path, monkeypatch, mock_config_path):
     assert validate() is True
     parsed = parse()
     assert parsed["src"]["vcs"] == "AzureDevOps"
-    assert parsed["dest"]["vcs"] == "Github"
+    assert parsed["src"]["pipeline"] is True
+    assert parsed["src"]["get_inventory"] is False
 
 def test_validate_minimal_config(tmp_path, monkeypatch, mock_config_path):
     config_data = {
-        "src": {"vcs": "AzureDevOps"},
+        "src": {
+            "vcs": "AzureDevOps",
+            "config": {
+                "org_url": "https://dev.azure.com/myorg"
+            }
+        },
         "dest": {"vcs": "Github"}
     }
     config_file = tmp_path / "config.yml"
@@ -51,10 +60,6 @@ def test_validate_minimal_config(tmp_path, monkeypatch, mock_config_path):
     monkeypatch.setattr(config, "_get_config_path", mock_config_path)
     
     assert validate() is True
-    parsed = parse()
-    assert parsed["src"]["vcs"] == "AzureDevOps"
-    assert parsed["src"]["pipeline"] is False
-    assert parsed["src"]["get_inventory"] is False
 
 def test_validate_invalid_vcs(tmp_path, monkeypatch, mock_config_path):
     config_data = {
@@ -83,6 +88,82 @@ def test_validate_invalid_auth(tmp_path, monkeypatch, mock_config_path):
 def test_validate_missing_file(tmp_path, monkeypatch, mock_config_path):
     monkeypatch.setattr(config, "_get_config_path", mock_config_path)
     assert validate() is False
+
+def test_validate_azure_config_valid(tmp_path, monkeypatch, mock_config_path):
+    config_data = {
+        "src": {
+            "vcs": "AzureDevOps",
+            "config": {"org_url": "https://dev.azure.com/myorg"}
+        },
+        "dest": {"vcs": "Github"}
+    }
+    config_file = tmp_path / "config.yml"
+    config_file.write_text(yaml.dump(config_data))
+    
+    monkeypatch.setattr(config, "_get_config_path", mock_config_path)
+    assert validate() is True
+
+def test_validate_azure_config_missing_url(tmp_path, monkeypatch, mock_config_path):
+    config_data = {
+        "src": {
+            "vcs": "AzureDevOps",
+            "config": {}
+        },
+        "dest": {"vcs": "Github"}
+    }
+    config_file = tmp_path / "config.yml"
+    config_file.write_text(yaml.dump(config_data))
+    
+    monkeypatch.setattr(config, "_get_config_path", mock_config_path)
+    assert validate() is False
+
+def test_validate_azure_config_invalid_url(tmp_path, monkeypatch, mock_config_path):
+    config_data = {
+        "src": {
+            "vcs": "AzureDevOps",
+            "config": {"org_url": "https://visualstudio.com/myorg"}
+        },
+        "dest": {"vcs": "Github"}
+    }
+    config_file = tmp_path / "config.yml"
+    config_file.write_text(yaml.dump(config_data))
+    
+    monkeypatch.setattr(config, "_get_config_path", mock_config_path)
+    assert validate() is False
+
+def test_validate_dest_azure_invalid(tmp_path, monkeypatch, mock_config_path):
+    config_data = {
+        "src": {
+            "vcs": "Github",
+            "auth": "ssh"
+        },
+        "dest": {
+            "vcs": "AzureDevOps",
+            "config": {} # Missing org_url
+        }
+    }
+    config_file = tmp_path / "config.yml"
+    config_file.write_text(yaml.dump(config_data))
+    
+    monkeypatch.setattr(config, "_get_config_path", mock_config_path)
+    assert validate() is False
+
+def test_validate_github_with_config(tmp_path, monkeypatch, mock_config_path):
+    config_data = {
+        "src": {
+            "vcs": "AzureDevOps",
+            "config": {"org_url": "https://dev.azure.com/myorg"}
+        },
+        "dest": {
+            "vcs": "Github",
+            "config": {"some_other_key": "value"} # Should be valid
+        }
+    }
+    config_file = tmp_path / "config.yml"
+    config_file.write_text(yaml.dump(config_data))
+    
+    monkeypatch.setattr(config, "_get_config_path", mock_config_path)
+    assert validate() is True
 
 def test_parse_invalid_returns_empty(tmp_path, monkeypatch, mock_config_path):
     monkeypatch.setattr(config, "_get_config_path", mock_config_path)

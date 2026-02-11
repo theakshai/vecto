@@ -78,6 +78,9 @@ def validate() -> bool:
     if src.get('vcs') not in allowed_vcs:
         return False
 
+    if 'config' in src and not isinstance(src['config'], dict):
+        return False
+
     if 'auth' in src and src['auth'] != 'ssh':
         return False
 
@@ -87,6 +90,10 @@ def validate() -> bool:
     if 'get_inventory' in src and not isinstance(src['get_inventory'], bool):
         return False
 
+    if src.get('vcs') in ["AzureDevops", "AzureDevOps"]:
+        if not _validate_azure_config(src):
+            return False
+
     # Validate dest
     dest = config.get('dest')
     if not isinstance(dest, dict):
@@ -95,8 +102,16 @@ def validate() -> bool:
     if dest.get('vcs') not in allowed_vcs:
         return False
 
+    if 'config' in dest and not isinstance(dest['config'], dict):
+        return False
+
     if 'auth' in dest and dest['auth'] != 'ssh':
         return False
+
+    if dest.get('vcs') in ["AzureDevops", "AzureDevOps"]:
+        if not _validate_azure_config(dest):
+            return False
+
 
     # Validate repos
     repos = config.get('repos')
@@ -106,6 +121,22 @@ def validate() -> bool:
         if 'map' in repos and not isinstance(repos['map'], str):
             return False
 
+    return True
+
+
+def _validate_azure_config(section_config: Dict[str, Any]) -> bool:
+    """Helper to validate Azure DevOps specific configuration."""
+    conf = section_config.get('config')
+    if not isinstance(conf, dict):
+        return False
+    
+    org_url = conf.get('org_url')
+    if not org_url or not isinstance(org_url, str):
+        return False
+    
+    if "dev.azure.com" not in org_url:
+        return False
+        
     return True
 
 
