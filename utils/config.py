@@ -69,6 +69,7 @@ def validate() -> bool:
         return False
 
     allowed_vcs = {"AzureDevops", "AzureDevOps", "Github", "Gitlab", "Bitbucket", "SVN"}
+    allowed_auth = {"ssh", "pat"}
 
     # Validate src
     src = config.get('src')
@@ -81,7 +82,7 @@ def validate() -> bool:
     if 'config' in src and not isinstance(src['config'], dict):
         return False
 
-    if 'auth' in src and src['auth'] != 'ssh':
+    if 'auth' in src and src['auth'] not in allowed_auth:
         return False
 
     if 'pipeline' in src and not isinstance(src['pipeline'], bool):

@@ -165,6 +165,20 @@ def test_validate_github_with_config(tmp_path, monkeypatch, mock_config_path):
     monkeypatch.setattr(config, "_get_config_path", mock_config_path)
     assert validate() is True
 
+def test_validate_pat_auth(tmp_path, monkeypatch, mock_config_path):
+    config_data = {
+        "src": {
+            "vcs": "Github",
+            "auth": "pat"
+        },
+        "dest": {"vcs": "Github"}
+    }
+    config_file = tmp_path / "config.yml"
+    config_file.write_text(yaml.dump(config_data))
+    
+    monkeypatch.setattr(config, "_get_config_path", mock_config_path)
+    assert validate() is True
+
 def test_parse_invalid_returns_empty(tmp_path, monkeypatch, mock_config_path):
     monkeypatch.setattr(config, "_get_config_path", mock_config_path)
     assert parse() == {}
